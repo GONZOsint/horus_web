@@ -1,0 +1,15 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-WTF
+Flask-Migrate
+Flask-Bootstrap
+Flask-Moment
+Werkzeug
+python-dotenv
+SQLAlchemy
+alembic
+requests
+beautifulsoup4
+PyJWT
+gunicorn 
