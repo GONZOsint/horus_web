@@ -8,4 +8,4 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB in bytes
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True) 
+    app.run(host='0.0.0.0', port=5000) 
