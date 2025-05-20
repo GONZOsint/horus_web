@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="landing-container">
+    <div class="hero-section">
+        <div class="container">
+            <div class="row justify-content-center text-center">
+                <div class="col-lg-8">
+                    <div class="hero-content">
+                        <h1>Bienvenido a Horus</h1>
+                        <p class="lead">Plataforma de OSINT para la localización de personas desaparecidas</p>
+                        
+                        {% if not current_user.is_authenticated %}
+                            <div class="hero-buttons">
+                                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    <span>Iniciar Sesión</span>
+                                </a>
+                                <a href="{{ url_for('auth.register') }}" class="btn btn-outline-primary">
+                                    <i class="fas fa-user-plus"></i>
+                                    <span>Registrarse</span>
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="hero-buttons">
+                                {% if not current_user.is_judge %}
+                                    <a href="{{ url_for('participant.dashboard') }}" class="btn btn-primary">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                        <span>Ir al Dashboard</span>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('judge.dashboard') }}" class="btn btn-primary">
+                                        <i class="fas fa-tachometer-alt"></i>
+                                        <span>Ir al Dashboard</span>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="container">
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3>OSINT</h3>
+                            <p>Inteligencia de Fuentes Abiertas para la búsqueda de personas</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-flag"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3>CTF</h3>
+                            <p>Competiciones de Capture The Flag con casos reales</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="feature-content">
+                            <h3>Comunidad</h3>
+                            <p>Colaboración ciudadana con las Fuerzas de Seguridad</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="info-card">
+                        <div class="info-content">
+                            <p>Horus Project es una organización sin ánimo de lucro dedicada a la capacitación en OSINT y la colaboración ciudadana en la localización de personas desaparecidas.</p>
+                            <div class="info-links">
+                                <a href="https://t.me/horusprojectcomunidad" target="_blank" class="social-link">
+                                    <i class="fab fa-telegram"></i>
+                                    <span>Telegram</span>
+                                </a>
+                                <a href="https://www.linkedin.com/company/horusproject" target="_blank" class="social-link">
+                                    <i class="fab fa-linkedin"></i>
+                                    <span>LinkedIn</span>
+                                </a>
+                                <a href="https://x.com/horusproject_" target="_blank" class="social-link">
+                                    <i class="fab fa-x-twitter"></i>
+                                    <span>X (Twitter)</span>
+                                </a>
+                                <a href="https://cndes-web.ses.mir.es" target="_blank" class="social-link">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    <span>CNDES</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

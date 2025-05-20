@@ -1,0 +1,199 @@
+{# Form Components #}
+{% macro render_input(field_or_name, label=None, type='text', icon=None, required=false, value='', placeholder='', step=None, min=None, max=None, pattern=None, autocomplete=None, help_text=None) %}
+<div class="mb-4">
+    {% if field_or_name is string %}
+        {# Handle direct value input #}
+        <label for="{{ field_or_name }}" class="form-label">{{ label }}</label>
+        <div class="input-group">
+            {% if icon %}
+                <span class="input-group-text">
+                    <i class="fas fa-{{ icon }}"></i>
+                </span>
+            {% endif %}
+            <input type="{{ type }}" 
+                   class="form-control" 
+                   id="{{ field_or_name }}" 
+                   name="{{ field_or_name }}" 
+                   value="{{ value }}"
+                   placeholder="{{ placeholder }}"
+                   {% if required %}required{% endif %}
+                   {% if step %}step="{{ step }}"{% endif %}
+                   {% if min %}min="{{ min }}"{% endif %}
+                   {% if max %}max="{{ max }}"{% endif %}
+                   {% if pattern %}pattern="{{ pattern }}"{% endif %}
+                   {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}>
+        </div>
+    {% else %}
+        {# Handle WTForms field #}
+        <label for="{{ field_or_name.id }}" class="form-label">{{ label or field_or_name.label.text }}</label>
+        <div class="input-group">
+            {% if icon %}
+                <span class="input-group-text">
+                    <i class="fas fa-{{ icon }}"></i>
+                </span>
+            {% endif %}
+            <input type="{{ type }}" 
+                   class="form-control {% if field_or_name.errors %}is-invalid{% endif %}" 
+                   id="{{ field_or_name.id }}" 
+                   name="{{ field_or_name.name }}" 
+                   value="{{ field_or_name.data or '' }}"
+                   placeholder="{{ placeholder }}"
+                   {% if required or field_or_name.flags.required %}required{% endif %}
+                   {% if step %}step="{{ step }}"{% endif %}
+                   {% if min %}min="{{ min }}"{% endif %}
+                   {% if max %}max="{{ max }}"{% endif %}
+                   {% if pattern %}pattern="{{ pattern }}"{% endif %}
+                   {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}>
+        </div>
+        {% if field_or_name.errors %}
+            <div class="invalid-feedback">
+                {% for error in field_or_name.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
+    {% if help_text %}
+        <div class="form-text">{{ help_text }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_textarea(field_or_name, label=None, rows=4, required=false, value='', placeholder='', help_text=None) %}
+<div class="mb-4">
+    {% if field_or_name is string %}
+        {# Handle direct value input #}
+        <label for="{{ field_or_name }}" class="form-label">{{ label }}</label>
+        <textarea class="form-control" 
+                  id="{{ field_or_name }}" 
+                  name="{{ field_or_name }}" 
+                  rows="{{ rows }}"
+                  placeholder="{{ placeholder }}"
+                  {% if required %}required{% endif %}>{{ value }}</textarea>
+    {% else %}
+        {# Handle WTForms field #}
+        <label for="{{ field_or_name.id }}" class="form-label">{{ label or field_or_name.label.text }}</label>
+        <textarea class="form-control {% if field_or_name.errors %}is-invalid{% endif %}" 
+                  id="{{ field_or_name.id }}" 
+                  name="{{ field_or_name.name }}" 
+                  rows="{{ rows }}"
+                  placeholder="{{ placeholder }}"
+                  {% if required or field_or_name.flags.required %}required{% endif %}>{{ field_or_name.data or '' }}</textarea>
+        {% if field_or_name.errors %}
+            <div class="invalid-feedback">
+                {% for error in field_or_name.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
+    {% if help_text %}
+        <div class="form-text">{{ help_text }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_select(field_or_name, label=None, options=None, required=false, help_text=None, selected=None) %}
+<div class="mb-4">
+    {% if field_or_name is string %}
+        {# Handle direct value input #}
+        <label for="{{ field_or_name }}" class="form-label">{{ label }}</label>
+        <select class="form-select" 
+                id="{{ field_or_name }}" 
+                name="{{ field_or_name }}"
+                {% if required %}required{% endif %}>
+            {% for value, text in options %}
+                <option value="{{ value }}" {{ 'selected' if value == selected else '' }}>{{ text }}</option>
+            {% endfor %}
+        </select>
+    {% else %}
+        {# Handle WTForms field #}
+        <label for="{{ field_or_name.id }}" class="form-label">{{ label or field_or_name.label.text }}</label>
+        <select class="form-select {% if field_or_name.errors %}is-invalid{% endif %}" 
+                id="{{ field_or_name.id }}" 
+                name="{{ field_or_name.name }}"
+                {% if required or field_or_name.flags.required %}required{% endif %}>
+            {% if options %}
+                {% for value, text in options %}
+                    <option value="{{ value }}" {{ 'selected' if value == (selected or field_or_name.data) else '' }}>
+                        {{ text }}
+                    </option>
+                {% endfor %}
+            {% else %}
+                {% for value, text in field_or_name.choices %}
+                    <option value="{{ value }}" {{ 'selected' if value == (selected or field_or_name.data) else '' }}>
+                        {{ text }}
+                    </option>
+                {% endfor %}
+            {% endif %}
+        </select>
+        {% if field_or_name.errors %}
+            <div class="invalid-feedback">
+                {% for error in field_or_name.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
+    {% if help_text %}
+        <div class="form-text">{{ help_text }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_password_input(field_or_name, label=None, required=false, help_text=None) %}
+<div class="mb-4">
+    {% if field_or_name is string %}
+        {# Handle direct value input #}
+        <label for="{{ field_or_name }}" class="form-label">{{ label }}</label>
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-lock"></i>
+            </span>
+            <input type="password" 
+                   class="form-control" 
+                   id="{{ field_or_name }}" 
+                   name="{{ field_or_name }}" 
+                   {% if required %}required{% endif %}>
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('{{ field_or_name }}')">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
+    {% else %}
+        {# Handle WTForms field #}
+        <label for="{{ field_or_name.id }}" class="form-label">{{ label or field_or_name.label.text }}</label>
+        <div class="input-group">
+            <span class="input-group-text">
+                <i class="fas fa-lock"></i>
+            </span>
+            <input type="password" 
+                   class="form-control {% if field_or_name.errors %}is-invalid{% endif %}" 
+                   id="{{ field_or_name.id }}" 
+                   name="{{ field_or_name.name }}" 
+                   {% if required or field_or_name.flags.required %}required{% endif %}>
+            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('{{ field_or_name.id }}')">
+                <i class="fas fa-eye"></i>
+            </button>
+        </div>
+        {% if field_or_name.errors %}
+            <div class="invalid-feedback">
+                {% for error in field_or_name.errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endif %}
+    {% if help_text %}
+        <div class="form-text">{{ help_text }}</div>
+    {% endif %}
+</div>
+{% endmacro %}
+
+{% macro render_submit_button(text, icon=None, btn_class='btn-primary') %}
+<button type="submit" class="btn {{ btn_class }} w-100">
+    {% if icon %}
+        <i class="fas fa-{{ icon }} me-2"></i>
+    {% endif %}
+    {{ text }}
+</button>
+{% endmacro %} 

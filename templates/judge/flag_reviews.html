@@ -1,0 +1,261 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Revisión de Flags</h2>
+    
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-4" id="flagTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                Pendientes <span class="badge bg-primary" id="pendingCount">{{ pending_submissions|length }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="reviewed-tab" data-bs-toggle="tab" data-bs-target="#reviewed" type="button" role="tab">
+                Revisadas <span class="badge bg-secondary" id="reviewedCount">{{ reviewed_submissions|length }}</span>
+            </button>
+        </li>
+    </ul>
+    
+    <!-- Tab Content -->
+    <div class="tab-content" id="flagTabsContent">
+        <!-- Pending Submissions -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+            <div id="pendingSubmissions">
+                {% if pending_submissions %}
+                    {% for submission in pending_submissions %}
+                        <div class="card mb-3" id="submission-{{ submission.id }}">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Flag #{{ submission.id }}</h5>
+                                <span class="badge bg-primary">{{ submission.category_name }}</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Caso:</strong> {{ submission.case.title }}</p>
+                                        <p><strong>Equipo:</strong> {{ submission.team.name }}</p>
+                                        <p><strong>Flag:</strong> {{ submission.flag }}</p>
+                                        <p><strong>Puntos:</strong> {{ submission.points }}</p>
+                                        {% if submission.source_url %}
+                                            <p><strong>Fuente:</strong> <a href="{{ submission.source_url }}" target="_blank">{{ submission.source_url }}</a></p>
+                                        {% endif %}
+                                        <p><strong>Descripción:</strong> {{ submission.notes }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        {% if submission.photo_path %}
+                                            <img src="{{ url_for('static', filename=submission.photo_path.replace('\\', '/')) }}" class="img-fluid mb-3" alt="Flag photo">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <form action="{{ url_for('judge.review_flag', submission_id=submission.id) }}" method="POST">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <div class="mb-3">
+                                        <label for="review_notes" class="form-label">Notas de Revisión</label>
+                                        <textarea class="form-control" id="review_notes" name="review_notes" rows="3"></textarea>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" name="is_correct" value="true" class="btn btn-success">
+                                            <i class="fas fa-check"></i> Aprobar
+                                        </button>
+                                        <button type="submit" name="is_correct" value="false" class="btn btn-danger">
+                                            <i class="fas fa-times"></i> Rechazar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="card-footer text-muted">
+                                Enviado el {{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">
+                        No hay flags pendientes de revisión.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Reviewed Submissions -->
+        <div class="tab-pane fade" id="reviewed" role="tabpanel">
+            <div id="reviewedSubmissions">
+                {% if reviewed_submissions %}
+                    {% for submission in reviewed_submissions %}
+                        <div class="card mb-3" id="submission-{{ submission.id }}">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">Flag #{{ submission.id }}</h5>
+                                <span class="badge {% if submission.is_correct %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ 'Aprobada' if submission.is_correct else 'Rechazada' }}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Caso:</strong> {{ submission.case.title }}</p>
+                                        <p><strong>Equipo:</strong> {{ submission.team.name }}</p>
+                                        <p><strong>Flag:</strong> {{ submission.flag }}</p>
+                                        <p><strong>Puntos:</strong> {{ submission.points }}</p>
+                                        {% if submission.source_url %}
+                                            <p><strong>Fuente:</strong> <a href="{{ submission.source_url }}" target="_blank">{{ submission.source_url }}</a></p>
+                                        {% endif %}
+                                        <p><strong>Descripción:</strong> {{ submission.notes }}</p>
+                                        {% if submission.review_notes %}
+                                            <p><strong>Notas de Revisión:</strong> {{ submission.review_notes }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {% if submission.photo_path %}
+                                            <img src="{{ url_for('static', filename=submission.photo_path.replace('\\', '/')) }}" class="img-fluid mb-3" alt="Flag photo">
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-footer text-muted">
+                                {% if submission.reviewed_at %}
+                                    Revisado el {{ submission.reviewed_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    Enviado el {{ submission.submitted_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">
+                        No hay flags revisadas.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let lastRefreshTime = new Date().getTime();
+    let isRefreshing = false;
+
+    function createSubmissionCard(submission) {
+        const reviewUrl = "{{ url_for('judge.review_flag', submission_id=0) }}".replace('0', submission.id);
+        return `
+            <div class="card mb-3" id="submission-${submission.id}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Flag #${submission.id}</h5>
+                    <span class="badge bg-primary">${submission.category_name}</span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Caso:</strong> ${submission.case_title}</p>
+                            <p><strong>Equipo:</strong> ${submission.team_name}</p>
+                            <p><strong>Flag:</strong> ${submission.flag}</p>
+                            <p><strong>Puntos:</strong> ${submission.points}</p>
+                            ${submission.source_url ? 
+                                `<p><strong>Fuente:</strong> <a href="${submission.source_url}" target="_blank">${submission.source_url}</a></p>` 
+                                : ''}
+                            <p><strong>Descripción:</strong> ${submission.notes}</p>
+                        </div>
+                        <div class="col-md-6">
+                            ${submission.photo_path ? 
+                                `<img src="{{ url_for('static', filename='') }}${submission.photo_path.replace('\\', '/')}" class="img-fluid mb-3" alt="Flag photo">` 
+                                : ''}
+                        </div>
+                    </div>
+                    <form action="${reviewUrl}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="mb-3">
+                            <label for="review_notes" class="form-label">Notas de Revisión</label>
+                            <textarea class="form-control" id="review_notes" name="review_notes" rows="3"></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="is_correct" value="true" class="btn btn-success">
+                                <i class="fas fa-check"></i> Aprobar
+                            </button>
+                            <button type="submit" name="is_correct" value="false" class="btn btn-danger">
+                                <i class="fas fa-times"></i> Rechazar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-muted">
+                    Enviado el ${submission.submitted_at}
+                </div>
+            </div>
+        `;
+    }
+
+    function showNewFlagsNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info alert-dismissible fade show position-fixed top-0 end-0 m-3';
+        notification.style.zIndex = '1050';
+        notification.innerHTML = `
+            <i class="fas fa-bell me-2"></i>
+            ¡Nuevas flags disponibles!
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+
+    async function refreshFlags() {
+        if (isRefreshing) return;
+        isRefreshing = true;
+
+        try {
+            const response = await fetch("{{ url_for('judge.get_flags_status') }}");
+            const data = await response.json();
+            
+            // Update counts
+            document.getElementById('pendingCount').textContent = data.pending_count;
+            document.getElementById('reviewedCount').textContent = data.reviewed_count;
+            
+            // If there are new pending submissions, refresh the pending tab content
+            if (data.has_new_pending) {
+                const pendingResponse = await fetch("{{ url_for('judge.get_pending_flags') }}");
+                const pendingData = await pendingResponse.json();
+                
+                const pendingContainer = document.getElementById('pendingSubmissions');
+                const currentCount = pendingContainer.querySelectorAll('.card').length;
+                
+                if (pendingData.submissions.length > 0) {
+                    if (pendingData.submissions.length > currentCount) {
+                        showNewFlagsNotification();
+                    }
+                    pendingContainer.innerHTML = pendingData.submissions.map(createSubmissionCard).join('');
+                } else {
+                    pendingContainer.innerHTML = `
+                        <div class="alert alert-info">
+                            No hay flags pendientes de revisión.
+                        </div>
+                    `;
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing flags:', error);
+        } finally {
+            isRefreshing = false;
+        }
+    }
+
+    // Refresh every 10 seconds
+    setInterval(refreshFlags, 10000);
+
+    // Initial refresh
+    document.addEventListener('DOMContentLoaded', function() {
+        refreshFlags();
+    });
+
+    // Add refresh button
+    const refreshButton = document.createElement('button');
+    refreshButton.className = 'btn btn-outline-primary position-fixed bottom-0 end-0 m-3';
+    refreshButton.style.zIndex = '1050';
+    refreshButton.innerHTML = '<i class="fas fa-sync-alt"></i>';
+    refreshButton.onclick = refreshFlags;
+    document.body.appendChild(refreshButton);
+</script>
+{% endblock %} 

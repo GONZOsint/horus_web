@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Judge Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        {% from 'components/card.html' import render_card %}
+        {% from 'components/form.html' import render_input, render_password_input, render_submit_button %}
+        
+        {% call render_card('Judge Login', icon='gavel') %}
+            <form method="POST" class="needs-validation" novalidate>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {{ render_input('username', 'Username', icon='user', required=true) }}
+                {{ render_password_input('password', 'Password', required=true) }}
+                
+                <div class="mb-4 form-check">
+                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                    <label class="form-check-label" for="remember">Remember me</label>
+                </div>
+                
+                {{ render_submit_button('Login', icon='sign-in-alt') }}
+            </form>
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('auth.judge_register') }}" class="text-decoration-none">
+                    <i class="fas fa-user-plus me-1"></i>Don't have a judge account? Register
+                </a>
+            </div>
+        {% endcall %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Password visibility toggle
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.nextElementSibling.querySelector('i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+    
+    // Form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+
+        // Remember me functionality
+        const rememberCheckbox = document.getElementById('remember');
+        const savedState = localStorage.getItem('rememberMe');
+        
+        if (savedState === 'true') {
+            rememberCheckbox.checked = true;
+        }
+        
+        rememberCheckbox.addEventListener('change', function() {
+            localStorage.setItem('rememberMe', this.checked);
+        });
+    });
+</script>
+{% endblock %} 

@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Transitions */
+    .copy-feedback,
+    .case-card {
+        transition: var(--transition-base);
+    }
+    
+    /* Card Styles */
+    .case-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .case-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-lg);
+        background-color: var(--hover-bg);
+    }
+    
+    .case-card .card-header,
+    .case-card .card-body {
+        background: var(--card-bg);
+        border: none;
+        color: var(--text-color);
+    }
+    
+    .case-card .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .case-card .card-footer {
+        background: var(--card-bg);
+        border-top: 1px solid var(--border-light);
+        margin-top: auto;
+        padding: 1rem;
+    }
+    
+    /* Photo Styles */
+    .case-photo,
+    .case-photo-placeholder {
+        width: 100px;
+        height: 100px;
+        border: 3px solid var(--accent-dark);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .case-photo {
+        object-fit: cover;
+    }
+    
+    .case-photo-placeholder {
+        background: linear-gradient(45deg, var(--accent-dark), var(--card-bg));
+    }
+    
+    /* Detail Items */
+    .case-detail-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .case-detail-item:last-child {
+        border-bottom: none;
+    }
+    
+    /* Status Badge */
+    .case-status-badge {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: var(--border-radius-sm);
+        font-weight: 500;
+        background-color: var(--primary-color);
+        color: var(--text-color);
+    }
+    
+    /* Summary Text */
+    .case-summary {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        line-height: 1.5;
+        color: var(--text-muted);
+    }
+
+    /* Icons */
+    .case-card .text-primary {
+        color: var(--primary-color) !important;
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        background: var(--card-bg);
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+
+    .modal-header {
+        background: var(--accent-dark);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .modal-footer {
+        background: var(--accent-dark);
+        border-top: 1px solid var(--border-light);
+    }
+
+    /* Form Controls */
+    .form-control {
+        background-color: var(--accent-dark);
+        border: 1px solid var(--border-light);
+        color: var(--text-color);
+    }
+
+    .form-control:focus {
+        background-color: var(--accent-dark);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(242, 148, 61, 0.15);
+        color: var(--text-color);
+    }
+
+    .form-control::placeholder {
+        color: var(--text-muted);
+    }
+
+    .form-label {
+        color: var(--text-color);
+    }
+
+    /* Buttons */
+    .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--text-color);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--text-color);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-hover);
+        border-color: var(--primary-hover);
+    }
+
+    /* List Group */
+    .list-group-item {
+        background-color: var(--card-bg);
+        border-color: var(--border-light);
+        color: var(--text-color);
+    }
+
+    .list-group-item .text-muted {
+        color: var(--text-muted) !important;
+    }
+
+    /* Badge */
+    .badge.bg-primary {
+        background-color: var(--primary-color) !important;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .case-photo,
+        .case-photo-placeholder {
+            width: 80px;
+            height: 80px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    <!-- Main Content Row -->
+    <div class="row g-4">
+        <!-- User Info Card -->
+        <div class="col-md-4">
+            {% from 'components/card.html' import render_card %}
+            {% call render_card('Informacion del usuario', icon='user', extra_classes='h-100') %}
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item d-flex align-items-center py-3">
+                        <i class="fas fa-user me-3 text-muted"></i>
+                        <div>
+                            <small class="text-muted d-block">Username</small>
+                            <span class="fw-medium">{{ current_user.username }}</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item d-flex align-items-center py-3">
+                        <i class="fas fa-circle me-3 {{ 'text-success' if current_user.is_active else 'text-danger' }}"></i>
+                        <div>
+                            <small class="text-muted d-block">Status</small>
+                            <span class="fw-medium">{{ 'Active' if current_user.is_active else 'Inactive' }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-3 mt-4">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateProfileModal">
+                        <i class="fas fa-user-edit me-2"></i>Actualizar perfil
+                    </button>
+                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+                        <i class="fas fa-key me-2"></i>Cambiar contraseña
+                    </button>
+                </div>
+            {% endcall %}
+        </div>
+        
+        <!-- Team Info Card -->
+        <div class="col-md-8">
+            {% if not current_user.current_team %}
+                {% call render_card('Equipo', icon='users', extra_classes='h-100') %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-4x text-muted mb-4"></i>
+                        <h4 class="mb-3">No eres parte de ningún equipo</h4>
+                        <p class="text-muted mb-4">Unete o crea un equipo para empezar a participar en casos</p>
+                        <div class="d-grid gap-3 col-md-6 mx-auto">
+                            <a href="{{ url_for('participant.create_team') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>Crear equipo
+                            </a>
+                            <a href="{{ url_for('participant.join_team') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-sign-in-alt me-2"></i>Unirse a equipo
+                            </a>
+                        </div>
+                    </div>
+                {% endcall %}
+            {% else %}
+                {% call render_card('Equipo', icon='users', extra_classes='h-100') %}
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h5 class="mb-2">{{ current_user.current_team.name }}</h5>
+                            <div class="d-flex align-items-center">
+                                <div class="me-2">
+                                    <small class="text-muted">Código de equipo:</small>
+                                </div>
+                                <div class="bg-light rounded p-2 me-2">
+                                    <code class="text-primary" id="teamCode">{{ current_user.current_team.invitation_code }}</code>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        id="copyButton"
+                                        type="button"
+                                        title="Copiar código">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3">Miembros del equipo</h6>
+                    <div class="list-group list-group-flush">
+                        {% for member in current_user.current_team.active_members %}
+                            <div class="list-group-item d-flex align-items-center py-3">
+                                <i class="fas fa-user-circle me-3 text-muted"></i>
+                                <div>
+                                    <span class="fw-medium">{{ member.username }}</span>
+                                    {% if member.id == current_user.current_team.created_by %}
+                                        <span class="badge bg-primary ms-2">Creador</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <a href="{{ url_for('participant.leave_team') }}" class="btn btn-outline-danger">
+                            <i class="fas fa-sign-out-alt me-2"></i>Dejar equipo
+                        </a>
+                    </div>
+                {% endcall %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Active Cases Section -->
+    {% if current_user.current_team %}
+        <div class="row mt-5">
+            <div class="col-12">
+                {% call render_card('Casos Activos', icon='folder') %}
+                    {% if cases %}
+                        <div class="row g-4">
+                            {% for case in cases %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card case-card h-100 shadow-sm">
+                                        <!-- Header with Photo and Basic Info -->
+                                        <div class="card-header bg-transparent border-0 pt-3 pb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="flex-shrink-0">
+                                                    {% if case.photo_path %}
+                                                        <img src="{{ url_for('static', filename=case.photo_path) }}" 
+                                                             class="rounded-circle case-photo" 
+                                                             alt="{{ case.title }}">
+                                                    {% else %}
+                                                        <div class="rounded-circle case-photo-placeholder d-flex align-items-center justify-content-center">
+                                                            <i class="fas fa-user fa-2x text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <h5 class="card-title mb-1 text-truncate" title="{{ case.title }}">{{ case.title }}</h5>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <span class="badge bg-primary case-status-badge">{{ case.status }}</span>
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-calendar-alt me-1"></i>
+                                                            {{ case.disappearance_date.strftime('%d/%m/%Y') if case.disappearance_date else 'No especificada' }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card-body pt-2">
+                                            <!-- Physical Details -->
+                                            {% if case.height or case.weight %}
+                                            <div class="row g-2 mb-2">
+                                                {% if case.height %}
+                                                <div class="col-6">
+                                                    <div class="case-detail-item py-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-ruler-vertical text-primary me-2"></i>
+                                                            <div>
+                                                                <small class="text-muted d-block">Altura</small>
+                                                                <span class="small fw-medium">{{ case.height }} cm</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                                {% if case.weight %}
+                                                <div class="col-6">
+                                                    <div class="case-detail-item py-1">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-weight text-primary me-2"></i>
+                                                            <div>
+                                                                <small class="text-muted d-block">Peso</small>
+                                                                <span class="small fw-medium">{{ case.weight }} kg</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Location -->
+                                            {% if case.location %}
+                                            <div class="case-detail-item py-1 mb-2">
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                                    <div>
+                                                        <small class="text-muted d-block">Última Ubicación</small>
+                                                        <span class="small fw-medium">{{ case.location }}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Summary -->
+                                            {% if case.description %}
+                                            <div class="mb-2">
+                                                <small class="text-muted d-block mb-1">Resumen</small>
+                                                <p class="card-text small mb-0 case-summary">
+                                                    {{ case.description|truncate(100) }}
+                                                </p>
+                                            </div>
+                                            {% endif %}
+
+                                            <!-- Footer -->
+                                            <div class="card-footer border-top mt-auto">
+                                                <div class="d-flex justify-content-center">
+                                                    <a href="{{ url_for('participant.view_case', case_id=case.id) }}" 
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-eye me-1"></i>Ver Detalles
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-folder-open fa-4x text-muted mb-4"></i>
+                            <h4 class="mb-3">No hay casos activos</h4>
+                            <p class="text-muted">No hay casos activos disponibles en este momento.</p>
+                        </div>
+                    {% endif %}
+                {% endcall %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Update Profile Modal -->
+<div class="modal fade" id="updateProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-edit me-2"></i>Update Profile
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('participant.update_profile') }}">
+                {{ form.csrf_token }}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" 
+                               value="{{ current_user.username }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-key me-2"></i>Change Password
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('auth.change_password') }}">
+                {{ form.csrf_token }}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" 
+                               name="current_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new_password" 
+                               name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm_password" 
+                               name="confirm_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const copyButton = document.getElementById('copyButton');
+    const teamCode = document.getElementById('teamCode');
+
+    if (copyButton && teamCode) {
+        copyButton.onclick = function() {
+            const textarea = document.createElement('textarea');
+            textarea.value = teamCode.textContent.trim();
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            
+            try {
+                textarea.select();
+                textarea.setSelectionRange(0, 99999);
+                const successful = document.execCommand('copy');
+                
+                if (successful) {
+                    this.innerHTML = '<i class="fas fa-check"></i>';
+                    this.classList.remove('btn-outline-primary');
+                    this.classList.add('btn-success');
+                    
+                    setTimeout(() => {
+                        this.innerHTML = '<i class="fas fa-copy"></i>';
+                        this.classList.remove('btn-success');
+                        this.classList.add('btn-outline-primary');
+                    }, 2000);
+                } else {
+                    throw new Error('Copy command failed');
+                }
+            } catch (err) {
+                this.innerHTML = '<i class="fas fa-times"></i>';
+                this.classList.remove('btn-outline-primary');
+                this.classList.add('btn-danger');
+                
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy"></i>';
+                    this.classList.remove('btn-danger');
+                    this.classList.add('btn-outline-primary');
+                }, 2000);
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        };
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        {% from 'components/card.html' import render_card %}
+        {% from 'components/form.html' import render_input, render_password_input, render_submit_button %}
+        
+        {% call render_card('Register', icon='user-plus') %}
+            <form method="POST" class="needs-validation" novalidate id="registerForm">
+                {{ form.csrf_token }}
+                {{ render_input(form.username, icon='user') }}
+                {{ render_password_input(form.password) }}
+                {{ render_password_input(form.confirm_password) }}
+                
+                <div class="mb-4">
+                    <label class="form-label">Password Strength</label>
+                    <div class="progress" style="height: 5px;">
+                        <div id="password-strength" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <small class="text-muted mt-1 d-block">Password must be at least 8 characters long</small>
+                </div>
+                
+                {{ render_submit_button('Register', icon='user-plus') }}
+            </form>
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('auth.login') }}" class="text-decoration-none">
+                    <i class="fas fa-sign-in-alt me-1"></i>Already have an account? Login
+                </a>
+            </div>
+        {% endcall %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Password visibility toggle
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        
+        const icon = input.nextElementSibling.querySelector('i');
+        if (!icon) return;
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+    
+    // Password strength meter and form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const password = document.getElementById('{{ form.password.id }}');
+        const strengthMeter = document.getElementById('password-strength');
+        const form = document.getElementById('registerForm');
+        
+        if (password && strengthMeter) {
+            password.addEventListener('input', function() {
+                const value = password.value;
+                let strength = 0;
+                
+                if (value.length >= 8) strength += 25;
+                if (value.match(/[a-z]/)) strength += 25;
+                if (value.match(/[A-Z]/)) strength += 25;
+                if (value.match(/[0-9]/)) strength += 25;
+                
+                strengthMeter.style.width = strength + '%';
+                
+                if (strength <= 25) {
+                    strengthMeter.className = 'progress-bar bg-danger';
+                } else if (strength <= 50) {
+                    strengthMeter.className = 'progress-bar bg-warning';
+                } else if (strength <= 75) {
+                    strengthMeter.className = 'progress-bar bg-info';
+                } else {
+                    strengthMeter.className = 'progress-bar bg-success';
+                }
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+    });
+</script>
+{% endblock %} 

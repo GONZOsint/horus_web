@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Update Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            {% from 'components/card.html' import render_card %}
+            {% call render_card('Update Profile', icon='user-edit') %}
+                <form method="POST" action="{{ url_for('participant.update_profile') }}">
+                    <div class="mb-4">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control form-control-lg" 
+                               id="username" name="username" 
+                               value="{{ current_user.username }}" required>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{{ url_for('participant.dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            {% endcall %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

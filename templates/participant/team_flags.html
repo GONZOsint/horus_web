@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Flags del Equipo</h2>
+    
+    {% if flags %}
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="flagTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                    <i class="fas fa-clock me-2"></i>Pendientes
+                    <span class="badge bg-warning ms-2">{{ flags|selectattr('is_correct', 'none')|list|length }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
+                    <i class="fas fa-check me-2"></i>Aprobadas
+                    <span class="badge bg-success ms-2">{{ flags|selectattr('is_correct', 'equalto', true)|list|length }}</span>
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
+                    <i class="fas fa-times me-2"></i>Rechazadas
+                    <span class="badge bg-danger ms-2">{{ flags|selectattr('is_correct', 'equalto', false)|list|length }}</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="flagTabsContent">
+            <!-- Pending Flags -->
+            <div class="tab-pane fade show active" id="pending" role="tabpanel">
+                {% set pending_flags = flags|selectattr('is_correct', 'none')|list %}
+                {% if pending_flags %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Caso</th>
+                                    <th>Flag</th>
+                                    <th>Categoría</th>
+                                    <th>Puntos</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for flag in pending_flags %}
+                                    <tr>
+                                        <td>#{{ flag.id }}</td>
+                                        <td>{{ flag.case.title }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#flagModal{{ flag.id }}">
+                                                Ver Flag
+                                            </button>
+                                        </td>
+                                        <td>{{ flag.category_name }}</td>
+                                        <td>{{ flag.points }}</td>
+                                        <td>{{ flag.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No hay flags pendientes de revisión.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Approved Flags -->
+            <div class="tab-pane fade" id="approved" role="tabpanel">
+                {% set approved_flags = flags|selectattr('is_correct', 'equalto', true)|list %}
+                {% if approved_flags %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Caso</th>
+                                    <th>Flag</th>
+                                    <th>Categoría</th>
+                                    <th>Puntos</th>
+                                    <th>Fecha</th>
+                                    <th>Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for flag in approved_flags %}
+                                    <tr>
+                                        <td>#{{ flag.id }}</td>
+                                        <td>{{ flag.case.title }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#flagModal{{ flag.id }}">
+                                                Ver Flag
+                                            </button>
+                                        </td>
+                                        <td>{{ flag.category_name }}</td>
+                                        <td>{{ flag.points }}</td>
+                                        <td>{{ flag.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>
+                                            {% if flag.review_notes %}
+                                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#notesModal{{ flag.id }}">
+                                                    Ver Notas
+                                                </button>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No hay flags aprobadas.
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Rejected Flags -->
+            <div class="tab-pane fade" id="rejected" role="tabpanel">
+                {% set rejected_flags = flags|selectattr('is_correct', 'equalto', false)|list %}
+                {% if rejected_flags %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Caso</th>
+                                    <th>Flag</th>
+                                    <th>Categoría</th>
+                                    <th>Puntos</th>
+                                    <th>Fecha</th>
+                                    <th>Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for flag in rejected_flags %}
+                                    <tr>
+                                        <td>#{{ flag.id }}</td>
+                                        <td>{{ flag.case.title }}</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#flagModal{{ flag.id }}">
+                                                Ver Flag
+                                            </button>
+                                        </td>
+                                        <td>{{ flag.category_name }}</td>
+                                        <td>{{ flag.points }}</td>
+                                        <td>{{ flag.submitted_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                                        <td>
+                                            {% if flag.review_notes %}
+                                                <button type="button" class="btn btn-sm btn-outline-info" 
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#notesModal{{ flag.id }}">
+                                                    Ver Notas
+                                                </button>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        No hay flags rechazadas.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Modals for each flag -->
+        {% for flag in flags %}
+            <!-- Flag Modal -->
+            <div class="modal fade" id="flagModal{{ flag.id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Flag #{{ flag.id }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p><strong>Flag:</strong> {{ flag.flag }}</p>
+                            {% if flag.source_url %}
+                                <p><strong>Fuente:</strong> <a href="{{ flag.source_url }}" target="_blank">{{ flag.source_url }}</a></p>
+                            {% endif %}
+                            {% if flag.notes %}
+                                <p><strong>Descripción:</strong> {{ flag.notes }}</p>
+                            {% endif %}
+                            {% if flag.photo_path %}
+                                <img src="{{ url_for('static', filename=flag.photo_path.replace('\\', '/')) }}" 
+                                     class="img-fluid mt-2" alt="Flag photo">
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Notes Modal -->
+            {% if flag.review_notes %}
+                <div class="modal fade" id="notesModal{{ flag.id }}" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Notas de Revisión - Flag #{{ flag.id }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>{{ flag.review_notes }}</p>
+                                <p class="text-muted">
+                                    Revisado el {{ flag.reviewed_at.strftime('%d/%m/%Y %H:%M') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            No hay flags enviadas por el equipo.
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

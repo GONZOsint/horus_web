@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container text-center mt-5">
+        <h1 class="display-1">404</h1>
+        <h2 class="mb-4">Página no encontrada</h2>
+        <p class="lead">Lo sentimos, la página que buscas no existe.</p>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+            <i class="fas fa-home me-2"></i>Volver al inicio
+        </a>
+    </div>
+{% endblock %} 

@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}{{ case.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-folder me-2"></i>{{ case.title }}
+            </h1>
+            <p class="text-muted mb-0">Detalles del caso</p>
+        </div>
+        <a href="{{ url_for('participant.dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    {% from 'components/card.html' import render_card %}
+    {% from 'components/modal.html' import render_modal %}
+    {% from 'components/form.html' import render_input, render_select, render_textarea, render_submit_button %}
+    
+    <div class="row g-4">
+        <div class="col-md-4">
+            {% call render_card('Foto', icon='camera') %}
+                {% if case.photo_path %}
+                    <div class="text-center">
+                        <img src="{{ url_for('static', filename=case.photo_path) }}" 
+                             class="img-fluid rounded" 
+                             alt="Foto de {{ case.title }}"
+                             style="max-height: 400px; width: auto;">
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-image fa-4x mb-3"></i>
+                        <p class="mb-0">No hay foto disponible</p>
+                    </div>
+                {% endif %}
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center mx-auto" 
+                            data-bs-toggle="modal" data-bs-target="#submitFlagModal">
+                        <i class="fas fa-flag me-2"></i>Reportar Flag
+                    </button>
+                </div>
+            {% endcall %}
+        </div>
+        
+        <div class="col-md-8">
+            {% call render_card('Información Personal', icon='user') %}
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column gap-3">
+                            <div>
+                                <small class="text-muted d-block">Nombre</small>
+                                <span>{{ case.first_name }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Primer Apellido</small>
+                                <span>{{ case.last_name1 }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Segundo Apellido</small>
+                                <span>{{ case.last_name2 }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Género</small>
+                                <span>
+                                    {% if case.gender == 'MALE' %}
+                                        Masculino
+                                    {% elif case.gender == 'FEMALE' %}
+                                        Femenino
+                                    {% else %}
+                                        Otro
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Fecha de Nacimiento</small>
+                                <span>{{ case.birth_date.strftime('%d/%m/%Y') if case.birth_date else 'No especificada' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Edad al Desaparecer</small>
+                                <span>{{ case.age_at_disappearance }} años</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Edad Actual</small>
+                                <span>{{ case.current_age }} años</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column gap-3">
+                            <div>
+                                <small class="text-muted d-block">Color de Ojos</small>
+                                <span>{{ case.eye_color or 'No especificado' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Color de Cabello</small>
+                                <span>{{ case.hair_color or 'No especificado' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Tipo de Cabello</small>
+                                <span>{{ case.hair_type or 'No especificado' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Longitud del Cabello</small>
+                                <span>{{ case.hair_length or 'No especificado' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Complexión</small>
+                                <span>{{ case.body_type or 'No especificado' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Estatura</small>
+                                <span>{{ case.height }} cm</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Peso</small>
+                                <span>{{ case.weight }} kg</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endcall %}
+
+            {% call render_card('Detalles de la Desaparición', icon='map-marker-alt') %}
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column gap-3">
+                            <div>
+                                <small class="text-muted d-block">Fecha de Desaparición</small>
+                                <span>{{ case.disappearance_date.strftime('%d/%m/%Y') if case.disappearance_date else 'No especificada' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Ubicación</small>
+                                <span>{{ case.disappearance_location or 'No especificada' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Ropa al Último Avistamiento</small>
+                                <span>{{ case.last_seen_clothing or 'No especificada' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex flex-column gap-3">
+                            <div>
+                                <small class="text-muted d-block">Necesidades Especiales</small>
+                                <span>{{ case.needs or 'No especificadas' }}</span>
+                            </div>
+                            <div>
+                                <small class="text-muted d-block">Estado</small>
+                                <span>
+                                    {% if case.is_found %}
+                                        <span class="badge bg-success">Encontrado</span>
+                                    {% elif case.is_active %}
+                                        <span class="badge bg-primary">Activo</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactivo</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endcall %}
+
+            {% if case.description %}
+            {% call render_card('Descripción', icon='file-alt') %}
+                <div class="d-flex flex-column gap-3">
+                    <p class="mb-0">{{ case.description }}</p>
+                </div>
+            {% endcall %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% call render_modal('submitFlagModal', 'Enviar Flag', icon='flag') %}
+    <form method="POST" action="{{ url_for('participant.submit_flag', case_id=case.id) }}" 
+          class="needs-validation" novalidate enctype="multipart/form-data">
+        {{ form.csrf_token }}
+        
+        <div class="mb-4">
+            {{ render_select(form.category, 'Categoría', required=true) }}
+            <small class="text-muted">Selecciona la categoría que mejor describe tu hallazgo</small>
+        </div>
+
+        <div class="mb-4">
+            {{ render_input('flag', 'Flag', icon='flag', required=true, 
+                          placeholder='Ingresa la flag que encontraste') }}
+            <small class="text-muted">La flag debe ser concisa y clara</small>
+        </div>
+
+        <div class="mb-4">
+            {{ render_input('source_url', 'Fuente (URL)', icon='link', 
+                          placeholder='https://ejemplo.com/fuente') }}
+            <small class="text-muted">Opcional: URL donde encontraste la información</small>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">
+                <i class="fas fa-camera me-2"></i>Foto
+            </label>
+            <input type="file" class="form-control" name="photo" id="photo" accept="image/*" 
+                   onchange="previewImage(this)">
+            <small class="text-muted">Opcional: Sube una foto relacionada con tu hallazgo</small>
+            <div id="photo_preview" class="mt-2 text-center" style="display: none;">
+                <img src="" alt="Vista previa" class="img-thumbnail" style="max-height: 200px;">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            {{ render_textarea(form.description, 'Descripción del Hallazgo', required=true, 
+                             placeholder='Describe detalladamente la información encontrada y su relevancia para el caso') }}
+            <small class="text-muted">Explica por qué esta información es relevante y cómo la encontraste</small>
+        </div>
+
+        {{ render_submit_button('Enviar Flag', icon='paper-plane') }}
+    </form>
+{% endcall %}
+
+<div class="position-fixed bottom-0 end-0 p-4">
+    <button type="button" class="btn btn-primary btn-lg rounded-circle shadow-lg" 
+            data-bs-toggle="modal" data-bs-target="#submitFlagModal"
+            title="Enviar Flag"
+            style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+        <i class="fas fa-flag"></i>
+    </button>
+</div>
+
+{% block extra_js %}
+<script>
+function previewImage(input) {
+    const preview = document.getElementById('photo_preview');
+    const previewImg = preview.querySelector('img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
+
+{% endblock %} 

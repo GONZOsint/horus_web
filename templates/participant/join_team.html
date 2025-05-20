@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Unirse a Equipo{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-transparent border-0">
+                    <h1 class="h4 mb-0">
+                        <i class="fas fa-user-plus me-2"></i>Unirse a un Equipo
+                    </h1>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-4">
+                            <label for="invitation_code" class="form-label">Código de Invitación</label>
+                            {{ form.invitation_code(class="form-control form-control-lg", placeholder="Ingrese el código de invitación") }}
+                            {% if form.invitation_code.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.invitation_code.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text text-muted mt-2">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Solicite el código de invitación al líder del equipo.
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>Unirse al Equipo
+                            </button>
+                            <a href="{{ url_for('participant.dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

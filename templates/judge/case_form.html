@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Edit' if case else 'New' }} Case{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">
+                <i class="fas fa-folder me-2"></i>{{ 'Edit' if case else 'New' }} Case
+            </h1>
+            <p class="text-muted mb-0">{{ 'Edit case details' if case else 'Create a new missing persons case' }}</p>
+        </div>
+        <a href="{{ url_for('judge.cases') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Cases
+        </a>
+    </div>
+
+    {% from 'components/card.html' import render_card %}
+    {% from 'components/form.html' import render_input, render_textarea, render_select, render_submit_button %}
+    
+    {% call render_card('Case Details', icon='folder') %}
+        <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {{ form.csrf_token }}
+            
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card bg-light border-0">
+                        <div class="card-body">
+                            <h5 class="card-title mb-3">
+                                <i class="fas fa-download me-2"></i>Import from CNDES
+                            </h5>
+                            <p class="card-text text-muted mb-3">
+                                Enter a CNDES case URL to automatically import case details.
+                            </p>
+                            <div class="input-group">
+                                <input type="url" class="form-control form-control-lg" id="cndes_url" name="cndes_url" 
+                                       placeholder="https://cndes-web.ses.mir.es/publico/Desaparecidos/Detalle-Desaparecido?desaparecido=...">
+                                <button type="button" class="btn btn-primary" onclick="importFromCNDES()">
+                                    <i class="fas fa-download me-2"></i>Import
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-md-6">
+                    {{ render_input(form.title, 'Title', value=form.title.data or '', placeholder='Enter case title', required=true) }}
+                    {{ render_input(form.first_name, 'First Name', value=form.first_name.data or '', placeholder='Enter first name') }}
+                    {{ render_input(form.last_name1, 'First Last Name', value=form.last_name1.data or '', placeholder='Enter first last name') }}
+                    {{ render_input(form.last_name2, 'Second Last Name', value=form.last_name2.data or '', placeholder='Enter second last name') }}
+                    {{ render_textarea(form.description, 'Description', value=form.description.data or '', placeholder='Enter case description', rows=4) }}
+                    {{ render_input(form.disappearance_location, 'Disappearance Location', value=form.disappearance_location.data or '', placeholder='Enter disappearance location') }}
+                    {{ render_input(form.disappearance_date, 'Disappearance Date', type='date', value=form.disappearance_date.data.strftime('%Y-%m-%d') if form.disappearance_date.data else '', placeholder='YYYY-MM-DD') }}
+                    {{ render_input(form.birth_date, 'Birth Date', type='date', value=form.birth_date.data.strftime('%Y-%m-%d') if form.birth_date.data else '', placeholder='YYYY-MM-DD') }}
+                    {{ render_input(form.age_at_disappearance, 'Age at Disappearance', type='number', value=form.age_at_disappearance.data or '', placeholder='Enter age at disappearance') }}
+                    {{ render_input(form.current_age, 'Current Age', type='number', value=form.current_age.data or '', placeholder='Enter current age') }}
+                </div>
+                <div class="col-md-6">
+                    {{ render_select(form.gender, 'Gender', options=[
+                        ('', 'Select gender'),
+                        ('MALE', 'Masculino'),
+                        ('FEMALE', 'Femenino'),
+                        ('OTHER', 'Otro')
+                    ], selected=form.gender.data or '') }}
+                    {{ render_input(form.eye_color, 'Eye Color', value=form.eye_color.data or '', placeholder='Enter eye color') }}
+                    {{ render_input(form.hair_color, 'Hair Color', value=form.hair_color.data or '', placeholder='Enter hair color') }}
+                    {{ render_input(form.hair_type, 'Hair Type', value=form.hair_type.data or '', placeholder='Enter hair type') }}
+                    {{ render_input(form.hair_length, 'Hair Length', value=form.hair_length.data or '', placeholder='Enter hair length') }}
+                    {{ render_input(form.body_type, 'Body Type', value=form.body_type.data or '', placeholder='Enter body type') }}
+                    {{ render_input(form.height, 'Height (cm)', type='number', step='0.01', value=form.height.data or '', placeholder='Enter height in cm') }}
+                    {{ render_input(form.weight, 'Weight (kg)', type='number', value=form.weight.data or '', placeholder='Enter weight in kg') }}
+                    {{ render_input(form.last_seen_clothing, 'Last Seen Clothing', value=form.last_seen_clothing.data or '', placeholder='Enter last seen clothing') }}
+                    <div class="mb-4">
+                        <label class="form-label">Photo</label>
+                        {{ form.photo(class="form-control form-control-lg") }}
+                        <div id="photo_preview" class="mt-3">
+                            {% if case and case.photo_path %}
+                                <img src="{{ url_for('static', filename=case.photo_path) }}" 
+                                     class="img-thumbnail" 
+                                     style="max-height: 200px; width: auto;">
+                            {% endif %}
+                        </div>
+                    </div>
+                    {{ render_select(form.disappearance_type, 'Disappearance Type', options=[
+                        ('', 'Select type'),
+                        ('VOLUNTARY', 'Voluntaria'),
+                        ('INVOLUNTARY', 'Involuntaria'),
+                        ('UNKNOWN', 'Desconocido')
+                    ], selected=form.disappearance_type.data or '') }}
+                    {{ render_textarea(form.needs, 'Special Needs', value=form.needs.data or '', placeholder='Enter special needs', rows=2) }}
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                               {{ 'checked' if case and case.is_active else '' }}>
+                        <label class="form-check-label" for="is_active">Active</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="is_found" name="is_found" 
+                               {{ 'checked' if case and case.is_found else '' }}>
+                        <label class="form-check-label" for="is_found">Found</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{{ url_for('judge.cases') }}" class="btn btn-outline-secondary me-md-2">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>{{ 'Save Changes' if case else 'Create Case' }}
+                </button>
+            </div>
+        </form>
+    {% endcall %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function importFromCNDES() {
+        const url = document.getElementById('cndes_url').value;
+        if (!url) {
+            alert('Please enter a CNDES URL');
+            return;
+        }
+
+        try {
+            const response = await fetch("{{ url_for('judge.import_cndes_case') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    'cndes_url': url
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                // Populate form fields with imported data
+                const fields = {
+                    'title': data.case_data.title,
+                    'first_name': data.case_data.first_name,
+                    'last_name1': data.case_data.last_name1,
+                    'last_name2': data.case_data.last_name2,
+                    'description': data.case_data.description,
+                    'disappearance_location': data.case_data.disappearance_location,
+                    'disappearance_date': data.case_data.disappearance_date ? new Date(data.case_data.disappearance_date).toISOString().split('T')[0] : '',
+                    'birth_date': data.case_data.birth_date ? new Date(data.case_data.birth_date).toISOString().split('T')[0] : '',
+                    'age_at_disappearance': data.case_data.age_at_disappearance,
+                    'current_age': data.case_data.current_age,
+                    'gender': data.case_data.gender,
+                    'eye_color': data.case_data.eye_color,
+                    'hair_color': data.case_data.hair_color,
+                    'hair_type': data.case_data.hair_type,
+                    'hair_length': data.case_data.hair_length,
+                    'body_type': data.case_data.body_type,
+                    'height': data.case_data.height,
+                    'weight': data.case_data.weight,
+                    'last_seen_clothing': data.case_data.last_seen_clothing,
+                    'disappearance_type': data.case_data.disappearance_type,
+                    'needs': data.case_data.needs
+                };
+
+                // Populate each field
+                for (const [fieldId, value] of Object.entries(fields)) {
+                    const element = document.getElementById(fieldId);
+                    if (element) {
+                        element.value = value || '';
+                    }
+                }
+
+                // Handle photo preview and storage
+                const photoPreview = document.getElementById('photo_preview');
+                if (data.photo_data) {
+                    // Store the photo data in a data attribute on the form
+                    document.querySelector('form').dataset.photoData = data.photo_data;
+                    
+                    // Display the photo preview
+                    photoPreview.innerHTML = `<img src="data:image/jpeg;base64,${data.photo_data}" class="img-thumbnail" style="max-height: 200px; width: auto;">`;
+                }
+
+                // Handle checkboxes
+                document.getElementById('is_found').checked = data.case_data.is_found || false;
+                document.getElementById('is_active').checked = data.case_data.is_active || true;
+            } else {
+                alert(data.error || 'Error importing case data');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error importing case data: ' + error.message);
+        }
+    }
+
+    // Add form submit handler
+    document.querySelector('form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            // Submit the form data
+            const formData = new FormData(this);
+            const response = await fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': "{{ csrf_token() }}",
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const responseData = await response.json();
+            
+            if (response.ok && responseData.success) {
+                const caseId = responseData.case_id;
+                
+                // If there's a photo to save, do it now
+                const photoData = this.dataset.photoData;
+                if (photoData) {
+                    try {
+                        // Ensure photo data is in the correct format
+                        const formattedPhotoData = photoData.startsWith('data:image') ? 
+                            photoData : `data:image/jpeg;base64,${photoData}`;
+                            
+                        const photoResponse = await fetch("{{ url_for('judge.save_case_photo_route') }}", {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': "{{ csrf_token() }}"
+                            },
+                            body: JSON.stringify({
+                                'case_id': caseId,
+                                'photo_data': formattedPhotoData
+                            })
+                        });
+
+                        if (!photoResponse.ok) {
+                            throw new Error('Failed to save photo');
+                        }
+                    } catch (error) {
+                        console.error('Error saving photo:', error);
+                        alert('Case created but failed to save photo. Please try uploading it again.');
+                    }
+                }
+
+                // Redirect to cases list
+                window.location.href = "{{ url_for('judge.cases') }}";
+            } else {
+                throw new Error(responseData.error || 'Failed to save case');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error saving case: ' + error.message);
+        }
+    });
+</script>
+{% endblock %} 

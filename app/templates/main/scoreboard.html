@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="scoreboard-container">
+    <!-- Header -->
+    <div class="scoreboard-header">
+        <h1>Resultados</h1>
+    </div>
+
+    <!-- Hidden data fields -->
+    <div id="chartData" 
+         data-top-teams-labels='{{ top_teams_labels|tojson|safe }}'
+         data-top-teams-points='{{ top_teams_points|tojson|safe }}'
+         data-time-labels='{{ time_labels|tojson|safe }}'
+         data-time-series='{{ time_series_data|tojson|safe }}'
+         style="display: none;">
+    </div>
+
+    <!-- Charts Section -->
+    <div class="scoreboard-charts">
+        <div class="row">
+            <!-- Top 10 Teams Chart -->
+            <div class="col-12 mb-4">
+                <div class="scoreboard-chart-card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="fas fa-trophy me-2"></i>Top 10 Equipos
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="topTeamsChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Points Over Time Chart -->
+            <div class="col-12 mb-4">
+                <div class="scoreboard-chart-card">
+                    <div class="card-header">
+                        <h5>
+                            <i class="fas fa-chart-line me-2"></i>Puntos en el Tiempo
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="pointsOverTimeChart" style="height: 400px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scoreboard Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="scoreboard-table-card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-list-ol me-2"></i>Tabla Completa
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table scoreboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Posición</th>
+                                    <th>Equipo</th>
+                                    <th>Puntos</th>
+                                    <th>Flags Resueltos</th>
+                                    <th>Última Flag</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for team in teams.items %}
+                                <tr>
+                                    <td>
+                                        {% if loop.index <= 3 %}
+                                            <span class="scoreboard-badge scoreboard-badge-warning">{{ loop.index + (teams.page - 1) * teams.per_page }}</span>
+                                        {% else %}
+                                            {{ loop.index + (teams.page - 1) * teams.per_page }}
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ team.name }}</td>
+                                    <td>
+                                        <span class="scoreboard-badge scoreboard-badge-primary">{{ team.points }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="scoreboard-badge scoreboard-badge-success">{{ team.solved_flags }}</span>
+                                    </td>
+                                    <td>{{ team.last_solve_time|default('N/A') }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    <nav aria-label="Page navigation" class="scoreboard-pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if teams.has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('main.scoreboard', page=teams.prev_num) }}">
+                                    <i class="fas fa-chevron-left"></i> Anterior
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for page_num in teams.iter_pages(left_edge=2, right_edge=2, left_current=2, right_current=2) %}
+                                {% if page_num %}
+                                    <li class="page-item {% if page_num == teams.page %}active{% endif %}">
+                                        <a class="page-link" href="{{ url_for('main.scoreboard', page=page_num) }}">{{ page_num }}</a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if teams.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('main.scoreboard', page=teams.next_num) }}">
+                                    Siguiente <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+    // Initialize all charts when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            console.log('Initializing charts...');
+            
+            const chartData = document.getElementById('chartData');
+            
+            // Top Teams Chart
+            const topTeamsLabels = JSON.parse(JSON.parse(chartData.dataset.topTeamsLabels));
+            const topTeamsPoints = JSON.parse(JSON.parse(chartData.dataset.topTeamsPoints));
+            
+            console.log('Top Teams Data:', { topTeamsLabels, topTeamsPoints });
+            
+            if (!topTeamsLabels.length || !topTeamsPoints.length) {
+                console.error('No data available for top teams chart');
+                return;
+            }
+
+            const topTeamsOptions = {
+                series: [{
+                    name: 'Puntos',
+                    data: topTeamsPoints
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 300,
+                    toolbar: {
+                        show: false
+                    },
+                    foreColor: '#e8eef7'
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 4,
+                        horizontal: false,
+                        columnWidth: '55%',
+                        endingShape: 'rounded'
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                stroke: {
+                    show: true,
+                    width: 2,
+                    colors: ['transparent']
+                },
+                xaxis: {
+                    categories: topTeamsLabels,
+                    title: {
+                        text: 'Equipos',
+                        style: {
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            color: '#e8eef7'
+                        }
+                    },
+                    labels: {
+                        style: {
+                            colors: '#e8eef7'
+                        }
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Puntos',
+                        style: {
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            color: '#e8eef7'
+                        }
+                    },
+                    labels: {
+                        style: {
+                            colors: '#e8eef7'
+                        }
+                    }
+                },
+                fill: {
+                    opacity: 0.8,
+                    colors: ['#36a2eb']
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: {
+                        formatter: function (val) {
+                            return val + " puntos"
+                        }
+                    }
+                },
+                legend: {
+                    labels: {
+                        colors: '#e8eef7'
+                    }
+                }
+            };
+
+            const topTeamsChart = new ApexCharts(document.querySelector("#topTeamsChart"), topTeamsOptions);
+            topTeamsChart.render();
+
+            // Points Over Time Chart
+            const timeLabels = JSON.parse(JSON.parse(chartData.dataset.timeLabels));
+            const timeSeriesData = JSON.parse(JSON.parse(chartData.dataset.timeSeries));
+            
+            console.log('Time Series Data:', { timeLabels, timeSeriesData });
+            
+            if (!timeLabels.length || !timeSeriesData.length) {
+                console.error('No data available for time series chart');
+                return;
+            }
+
+            const timeSeriesOptions = {
+                series: timeSeriesData,
+                chart: {
+                    type: 'line',
+                    height: 300,
+                    toolbar: {
+                        show: false
+                    },
+                    zoom: {
+                        enabled: false
+                    },
+                    foreColor: '#e8eef7'
+                },
+                stroke: {
+                    curve: 'smooth',
+                    width: 2
+                },
+                xaxis: {
+                    categories: timeLabels,
+                    title: {
+                        text: 'Tiempo',
+                        style: {
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            color: '#e8eef7'
+                        }
+                    },
+                    labels: {
+                        rotate: -45,
+                        rotateAlways: true,
+                        style: {
+                            colors: '#e8eef7'
+                        }
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Puntos',
+                        style: {
+                            fontSize: '14px',
+                            fontWeight: 'bold',
+                            color: '#e8eef7'
+                        }
+                    },
+                    labels: {
+                        style: {
+                            colors: '#e8eef7'
+                        }
+                    }
+                },
+                tooltip: {
+                    theme: 'dark',
+                    y: {
+                        formatter: function (val) {
+                            return val + " puntos"
+                        }
+                    }
+                },
+                legend: {
+                    position: 'top',
+                    horizontalAlign: 'left',
+                    offsetY: -10,
+                    labels: {
+                        colors: '#e8eef7'
+                    }
+                }
+            };
+
+            const timeSeriesChart = new ApexCharts(document.querySelector("#pointsOverTimeChart"), timeSeriesOptions);
+            timeSeriesChart.render();
+
+            console.log('Charts initialized successfully');
+        } catch (error) {
+            console.error('Error initializing charts:', error);
+        }
+    });
+</script>
+{% endblock %} 

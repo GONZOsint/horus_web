@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Cases{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <div>
+            <h1 class="h3 mb-2">
+                <i class="fas fa-folder me-2"></i>Manage Cases
+            </h1>
+            <p class="text-muted mb-0">Create and manage missing persons cases</p>
+        </div>
+        <a href="{{ url_for('judge.new_case') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>New Case
+        </a>
+    </div>
+
+    {% from 'components/card.html' import render_card %}
+    
+    {% call render_card('Cases', icon='folder') %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Location</th>
+                        <th>Disappearance Date</th>
+                        <th>Status</th>
+                        <th>Created</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if cases %}
+                        {% for case in cases %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-folder me-3 text-muted"></i>
+                                        <span class="fw-medium">{{ case.title }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-map-marker-alt me-3 text-muted"></i>
+                                        <span>{{ case.disappearance_location }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-calendar me-3 text-muted"></i>
+                                        <span>{{ case.disappearance_date.strftime('%Y-%m-%d') if case.disappearance_date else 'N/A' }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if case.is_found %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-2"></i>Found
+                                        </span>
+                                    {% elif case.is_active %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-circle me-2"></i>Active
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-circle me-2"></i>Inactive
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-clock me-3 text-muted"></i>
+                                        <span>{{ case.created_at.strftime('%Y-%m-%d') }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex justify-content-end gap-3">
+                                        <a href="{{ url_for('judge.edit_case', case_id=case.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           title="Edit case">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger delete-case-btn" 
+                                                data-case-id="{{ case.id }}"
+                                                title="Delete case">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted">
+                                    <i class="fas fa-folder-open fa-4x mb-4"></i>
+                                    <h4 class="mb-3">No cases created yet</h4>
+                                    <p class="mb-4">Start by creating your first case</p>
+                                    <a href="{{ url_for('judge.new_case') }}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Create First Case
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    {% endcall %}
+</div>
+
+{% from 'components/modal.html' import render_modal %}
+
+{% call render_modal('deleteCaseModal', 'Delete Case', icon='trash') %}
+    <form method="POST" action="" id="deleteCaseForm" class="needs-validation" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <p class="mb-4">Are you sure you want to delete this case? This action cannot be undone.</p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="button" class="btn btn-secondary me-md-2" data-bs-dismiss="modal">
+                <i class="fas fa-times me-2"></i>Cancel
+            </button>
+            <button type="submit" class="btn btn-danger" onclick="submitDelete(event)">
+                <i class="fas fa-trash me-2"></i>Delete Case
+            </button>
+        </div>
+    </form>
+{% endcall %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.delete-case-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const caseId = this.getAttribute('data-case-id');
+                confirmDelete(caseId);
+            });
+        });
+    });
+
+    function confirmDelete(caseId) {
+        const form = document.getElementById('deleteCaseForm');
+        const url = "{{ url_for('judge.delete_case', case_id=0) }}".replace('0', caseId);
+        form.action = url;
+        const modal = new bootstrap.Modal(document.getElementById('deleteCaseModal'));
+        modal.show();
+    }
+
+    function submitDelete(event) {
+        event.preventDefault();
+        const form = document.getElementById('deleteCaseForm');
+        
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                throw new Error('Network response was not ok');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting case. Please try again.');
+        });
+    }
+</script>
+{% endblock %} 

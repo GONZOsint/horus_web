@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        {% from 'components/card.html' import render_card %}
+        {% from 'components/form.html' import render_input, render_password_input, render_submit_button %}
+        
+        {% call render_card('Login', icon='sign-in-alt') %}
+            <form method="POST" class="needs-validation" novalidate id="loginForm">
+                {{ form.csrf_token }}
+                {{ render_input(form.username, icon='user') }}
+                {{ render_password_input(form.password) }}
+                
+                <div class="mb-4 form-check">
+                    {{ form.remember(class="form-check-input") }}
+                    <label class="form-check-label" for="{{ form.remember.id }}">
+                        Remember me
+                    </label>
+                </div>
+                
+                {{ render_submit_button('Login', icon='sign-in-alt') }}
+            </form>
+            
+            <div class="text-center mt-4">
+                <a href="{{ url_for('auth.register') }}" class="text-decoration-none">
+                    <i class="fas fa-user-plus me-1"></i>Don't have an account? Register
+                </a>
+            </div>
+        {% endcall %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Password visibility toggle
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        
+        const icon = input.nextElementSibling.querySelector('i');
+        if (!icon) return;
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+    
+    // Form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('loginForm');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+    });
+</script>
+{% endblock %} 

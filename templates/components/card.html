@@ -1,0 +1,21 @@
+{# Card Component #}
+{% macro render_card(title, icon=None, footer=None, extra_classes='') %}
+<div class="card shadow-sm {{ extra_classes }}">
+    <div class="card-header">
+        <h4 class="mb-0">
+            {% if icon %}
+                <i class="fas fa-{{ icon }} me-2"></i>
+            {% endif %}
+            {{ title }}
+        </h4>
+    </div>
+    <div class="card-body">
+        {{ caller() }}
+    </div>
+    {% if footer %}
+        <div class="card-footer text-center">
+            {{ footer }}
+        </div>
+    {% endif %}
+</div>
+{% endmacro %} 

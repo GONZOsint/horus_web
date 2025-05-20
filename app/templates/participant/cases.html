@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block title %}Casos Activos{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-5">
+    {% from 'components/card.html' import render_card %}
+    {% from 'components/modal.html' import render_modal %}
+    {% from 'components/form.html' import render_input, render_select, render_textarea, render_submit_button %}
+    
+    {% call render_card('Casos Activos', icon='folder') %}
+        {% if cases %}
+            <div class="cases-grid">
+                {% for case in cases %}
+                    <div class="case-card">
+                        <div class="card-body">
+                            <!-- Header with Photo and Title -->
+                            <div class="case-header d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    {% if case.photo_path %}
+                                        <img src="{{ url_for('static', filename=case.photo_path) }}" 
+                                             class="rounded-circle" 
+                                             alt="{{ case.title }}">
+                                    {% else %}
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center"
+                                             style="width: 64px; height: 64px;">
+                                            <i class="fas fa-user fa-2x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h5 class="card-title mb-2 text-truncate" title="{{ case.title }}">{{ case.title }}</h5>
+                                    <small class="text-muted d-flex align-items-center">
+                                        <i class="fas fa-calendar-alt me-2"></i>
+                                        {{ case.disappearance_date.strftime('%d/%m/%Y') if case.disappearance_date else 'No especificada' }}
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="case-description">
+                                <p class="text-muted mb-0">{{ case.description|truncate(150) if case.description else 'No hay descripción disponible' }}</p>
+                            </div>
+
+                            <!-- Quick Info -->
+                            <div class="case-badges">
+                                {% if case.disappearance_location %}
+                                    <span class="badge">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        {{ case.disappearance_location }}
+                                    </span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Flag Statistics -->
+                            <div class="case-flags">
+                                <div class="d-flex flex-wrap gap-3">
+                                    <div class="flag-stat">
+                                        <div class="flag-icon">
+                                            <i class="fas fa-flag"></i>
+                                        </div>
+                                        <span class="badge bg-primary">
+                                            {{ case_stats[case.id].team_flags }}
+                                        </span>
+                                        <small class="text-muted d-block mt-1">Reportadas</small>
+                                    </div>
+                                    <div class="flag-stat">
+                                        <div class="flag-icon">
+                                            <i class="fas fa-check"></i>
+                                        </div>
+                                        <span class="badge bg-success">
+                                            {{ case_stats[case.id].accepted_flags }}
+                                        </span>
+                                        <small class="text-muted d-block mt-1">Aprobadas</small>
+                                    </div>
+                                    <div class="flag-stat">
+                                        <div class="flag-icon">
+                                            <i class="fas fa-times"></i>
+                                        </div>
+                                        <span class="badge bg-danger">
+                                            {{ case_stats[case.id].rejected_flags|default(0) }}
+                                        </span>
+                                        <small class="text-muted d-block mt-1">Rechazadas</small>
+                                    </div>
+                                    <div class="flag-stat">
+                                        <div class="flag-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <span class="badge bg-warning">
+                                            {{ case_stats[case.id].pending_flags|default(0) }}
+                                        </span>
+                                        <small class="text-muted d-block mt-1">Pendientes</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="card-actions">
+                                <div class="btn-group">
+                                    <a href="{{ url_for('participant.view_case', case_id=case.id) }}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                        Ver Detalles
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-primary"
+                                            onclick="openFlagOverlay('{{ case.id }}')">
+                                        <i class="fas fa-flag"></i>
+                                        Subir Flag
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-folder-open fa-4x text-muted mb-4"></i>
+                <h4 class="mb-3">No hay casos activos</h4>
+                <p class="text-muted">No hay casos activos disponibles en este momento.</p>
+            </div>
+        {% endif %}
+    {% endcall %}
+</div>
+
+<!-- Flag Overlays Container -->
+<div id="flagOverlaysContainer">
+    {% for case in cases %}
+    <div id="submitFlagModal{{ case.id }}" class="flag-overlay">
+        <div class="flag-overlay-content">
+            <div class="flag-overlay-header">
+                <h5>
+                    <i class="fas fa-flag me-2"></i>
+                    Subir Flag - {{ case.title }}
+                </h5>
+                <button type="button" class="flag-overlay-close" onclick="closeFlagOverlay('{{ case.id }}')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flag-overlay-body">
+                <form method="POST" action="{{ url_for('participant.submit_flag', case_id=case.id) }}" 
+                      class="needs-validation flag-form" novalidate enctype="multipart/form-data">
+                    {{ form.csrf_token }}
+                    
+                    <div class="form-group mb-4">
+                        {{ render_select(form.category, 'Categoría', required=true) }}
+                        <small class="form-text">Selecciona la categoría que mejor describe tu hallazgo</small>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        {{ render_input('flag', 'Flag', icon='flag', required=true, 
+                                      placeholder='Ingresa la flag que encontraste') }}
+                        <small class="form-text">La flag debe ser concisa y clara</small>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        {{ render_input('source_url', 'Fuente (URL)', icon='link', 
+                                      placeholder='https://ejemplo.com/fuente') }}
+                        <small class="form-text">Opcional: URL donde encontraste la información</small>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label class="form-label">
+                            <i class="fas fa-camera me-2"></i>Foto
+                        </label>
+                        <input type="file" class="form-control" name="photo" id="photo{{ case.id }}" accept="image/*" 
+                               onchange="previewImage(this, '{{ case.id }}')">
+                        <small class="form-text">Opcional: Sube una foto relacionada con tu hallazgo</small>
+                        <div id="photo_preview{{ case.id }}" class="mt-2 text-center" style="display: none;">
+                            <img src="" alt="Vista previa" class="img-thumbnail" style="max-height: 200px;">
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        {{ render_textarea(form.description, 'Descripción del Hallazgo', required=true, 
+                                         placeholder='Describe detalladamente la información encontrada y su relevancia para el caso') }}
+                        <small class="form-text">Explica por qué esta información es relevante y cómo la encontraste</small>
+                    </div>
+
+                    <div class="form-group">
+                        {{ render_submit_button('Enviar Flag', icon='paper-plane') }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% block extra_js %}
+<script>
+function previewImage(input, caseId) {
+    const preview = document.getElementById('photo_preview' + caseId);
+    const previewImg = preview.querySelector('img');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.style.display = 'block';
+        }
+        
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        preview.style.display = 'none';
+    }
+}
+
+function openFlagOverlay(caseId) {
+    const overlay = document.getElementById('submitFlagModal' + caseId);
+    if (overlay) {
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeFlagOverlay(caseId) {
+    const overlay = document.getElementById('submitFlagModal' + caseId);
+    if (overlay) {
+        overlay.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
+
+// Initialize flag overlays
+document.addEventListener('DOMContentLoaded', function() {
+    // Close overlay when clicking outside
+    document.querySelectorAll('.flag-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === this) {
+                const caseId = this.id.replace('submitFlagModal', '');
+                closeFlagOverlay(caseId);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% endblock %} 
